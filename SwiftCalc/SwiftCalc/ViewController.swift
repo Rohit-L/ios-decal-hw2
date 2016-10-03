@@ -21,7 +21,11 @@ class ViewController: UIViewController {
     
     // TODO: This looks like a good place to add some data structures.
     //       One data structure is initialized below for reference.
-    var someDataStructure: [String] = [""]
+    var currentOperator: String? = nil
+    var previousValue: String? = "0"
+    var mode: String? = nil
+    var operatorJustPressed: Bool = false
+    var insertDecimal: Bool = false
     
 
     override func viewDidLoad() {
@@ -53,6 +57,7 @@ class ViewController: UIViewController {
     //       Modify this one or create your own.
     func updateResultLabel(_ content: String) {
         print("Update me like one of those PCs")
+        resultLabel.text = content
     }
     
     
@@ -80,17 +85,102 @@ class ViewController: UIViewController {
     func numberPressed(_ sender: CustomButton) {
         guard Int(sender.content) != nil else { return }
         print("The number \(sender.content) was pressed")
+        
+        if (resultLabel.text == "0") {
+            if insertDecimal {
+                updateResultLabel("0." + sender.content)
+                insertDecimal = false
+            } else {
+                updateResultLabel(sender.content)
+            }
+            self.operatorJustPressed = false
+        } else if (self.operatorJustPressed) {
+            updateResultLabel(sender.content)
+            self.operatorJustPressed = false
+        } else if ((resultLabel.text?.characters.count)! >= 7) {
+            return
+        } else {
+            if insertDecimal {
+                updateResultLabel(resultLabel.text! + "." + sender.content)
+                insertDecimal = false
+            } else {
+                updateResultLabel(resultLabel.text! + sender.content)
+            }
+        }
         // Fill me in!
     }
     
     // REQUIRED: The responder to an operator button being pressed.
     func operatorPressed(_ sender: CustomButton) {
         // Fill me in!
+        print("Operator Pressed")
+        if (sender.content == "C") {
+            self.previousValue = "0"
+            self.operatorJustPressed = false
+            self.currentOperator = nil
+            updateResultLabel("0")
+        } else if (sender.content == "+/-") {
+            if (resultLabel.text?.characters.first == "-") {
+                updateResultLabel(resultLabel.text!.substring(from: resultLabel.text!.index(after: resultLabel.text!.startIndex)))
+            } else {
+                updateResultLabel("-" + resultLabel.text!)
+            }
+        } else if (sender.content == "=") {
+            if self.currentOperator == "+" {
+                self.previousValue = String(Double(self.previousValue!)! + Double(resultLabel.text!)!)
+            } else if self.currentOperator == "-" {
+                self.previousValue = String(Double(self.previousValue!)! - Double(resultLabel.text!)!)
+            } else if self.currentOperator == "/" {
+                self.previousValue = String(Double(self.previousValue!)! / Double(resultLabel.text!)!)
+            } else if self.currentOperator == "*" {
+                self.previousValue = String(Double(self.previousValue!)! * Double(resultLabel.text!)!)
+            }
+            if floor(Double(self.previousValue!)!) == Double(self.previousValue!)! {
+                print(self.previousValue!)
+                self.previousValue = String(Int(Double(self.previousValue!)!))
+            }
+            print(self.previousValue!)
+            if (self.previousValue?.characters.count)! > 7 {
+                updateResultLabel((Double(self.previousValue!)?.scientificStyle)!)
+            } else {
+                updateResultLabel(self.previousValue!)
+            }
+            self.currentOperator = nil
+            self.operatorJustPressed = true
+        } else if (["+", "-", "/", "*"].contains(sender.content)) {
+            if (self.currentOperator != nil) {
+                self.operatorPressed(CustomButton(content: "="))
+            }
+            self.operatorJustPressed = true
+            self.previousValue = resultLabel.text!
+            self.currentOperator = sender.content
+        }
     }
     
     // REQUIRED: The responder to a number or operator button being pressed.
     func buttonPressed(_ sender: CustomButton) {
        // Fill me in!
+        if (sender.content == "0") {
+            if resultLabel.text! != "0" {
+                if self.operatorJustPressed {
+                    updateResultLabel("0")
+                } else {
+                    updateResultLabel(resultLabel.text! + sender.content)
+                }
+            } else if insertDecimal {
+                updateResultLabel("0." + sender.content)
+                insertDecimal = false
+            }
+        } else if (sender.content == ".") {
+            if !resultLabel.text!.contains(".") {
+                print("Yay")
+                insertDecimal = true
+            } else {
+                insertDecimal = false
+            }
+            
+        }
+        
     }
     
     // IMPORTANT: Do NOT change any of the code below.
